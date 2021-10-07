@@ -1,4 +1,4 @@
-MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  1
+MPASM 5.87                          MAIN.ASM   10-7-2021  23:06:16         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -58,7 +58,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00034 
                       00035 ;    cpu equates (memory map)
 Warning[207]: Found label after column 1. (myPortB)
-MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  2
+MPASM 5.87                          MAIN.ASM   10-7-2021  23:06:16         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -89,54 +89,62 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00054 ;*************************************************************
                             *********** 
 0005                  00055 MAIN
-0005   3002           00056     movlw led1_ON    ; move led1_ON in W
-0006   0086           00057     movwf myPortB        ; move W in f (ça bouge ce qu'y a dan
+0005   2???           00056     call sub_led1_on
+0006   2???           00057     call sub_led1_off
+0007   2???           00058     goto MAIN
+                      00059     
+0008                  00060 sub_led1_on
+0008   3002           00061     movlw led1_ON    ; move led1_ON in W
+0009   0086           00062     movwf myPortB        ; move W in f (ça bouge ce qu'y a dan
                             s w dans portB)
-0007   2???           00058     call Delay
-0008   3000           00059     movlw led1_OFF ; move led1_OFF in w
-0009   0086           00060     movwf myPortB        ; move W in f (ça bouge ce qu'y a dan
+000A   2???           00063     call Delay
+000B   0008           00064     return
+                      00065     
+000C                  00066 sub_led1_off
+000C   3000           00067     movlw led1_OFF ; move led1_OFF in w
+000D   0086           00068     movwf myPortB        ; move W in f (ça bouge ce qu'y a dan
                             s w dans portB)
-000A   2???           00061     call Delay
-000B   2???           00062     goto MAIN
-                      00063 
-                      00064 ;---------------- 1s Delay -----------------------------------
-                      00065         cblock
-  00000025            00066         d1
-  00000026            00067         d2
-  00000027            00068         d3
-                      00069         endc
-                      00070 
-000C                  00071 Delay
-                      00072                         ;499994 cycles
-000C   3003           00073         movlw   0x03
-000D   00A5           00074         movwf   d1
-000E   3018           00075         movlw   0x18
-000F   00A6           00076         movwf   d2
-0010   3002           00077         movlw   0x02
-0011   00A7           00078         movwf   d3
-0012                  00079 Delay_0
-0012   0BA5           00080         decfsz  d1, f
-0013   2???           00081         goto    $+2
-0014   0BA6           00082         decfsz  d2, f
-MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  3
+000E   2???           00069     call Delay
+000F   0008           00070     return
+                      00071     
+                      00072 ;---------------- 1s Delay -----------------------------------
+                      00073         cblock
+  00000025            00074         d1
+  00000026            00075         d2
+  00000027            00076         d3
+                      00077         endc
+                      00078 
+0010                  00079 Delay
+                      00080                         ;499994 cycles
+0010   3003           00081         movlw   0x03
+0011   00A5           00082         movwf   d1
+MPASM 5.87                          MAIN.ASM   10-7-2021  23:06:16         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0015   2???           00083         goto    $+2
-0016   0BA7           00084         decfsz  d3, f
-0017   2???           00085         goto    Delay_0
-                      00086 
-                      00087                         ;2 cycles
-0018   2???           00088         goto    $+1
-                      00089 
-                      00090                         ;4 cycles (including call)
-0019   0008           00091         return
-                      00092     
+0012   3018           00083         movlw   0x18
+0013   00A6           00084         movwf   d2
+0014   3002           00085         movlw   0x02
+0015   00A7           00086         movwf   d3
+0016                  00087 Delay_0
+0016   0BA5           00088         decfsz  d1, f
+0017   2???           00089         goto    $+2
+0018   0BA6           00090         decfsz  d2, f
+0019   2???           00091         goto    $+2
+001A   0BA7           00092         decfsz  d3, f
+001B   2???           00093         goto    Delay_0
+                      00094 
+                      00095                         ;2 cycles
+001C   2???           00096         goto    $+1
+                      00097 
+                      00098                         ;4 cycles (including call)
+001D   0008           00099         return
+                      00100     
 Warning[205]: Found directive in column 1. (end)
-3FF2                  00093 end
-MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  4
+3FF2                  00101 end
+MPASM 5.87                          MAIN.ASM   10-7-2021  23:06:16         PAGE  4
 
 
 SYMBOL TABLE
@@ -144,8 +152,8 @@ SYMBOL TABLE
 
 C                                 00000000
 DC                                00000001
-Delay                             0000000C
-Delay_0                           00000012
+Delay                             00000010
+Delay_0                           00000016
 EEADR                             00000009
 EECON1                            00000088
 EECON2                            00000089
@@ -196,7 +204,7 @@ STATUS                            00000003
 T0CS                              00000005
 T0IE                              00000005
 T0IF                              00000002
-MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  5
+MPASM 5.87                          MAIN.ASM   10-7-2021  23:06:16         PAGE  5
 
 
 SYMBOL TABLE
@@ -226,9 +234,9 @@ WR                                00000001
 WREN                              00000002
 WRERR                             00000003
 Z                                 00000002
-_.org_0_0013                      00000013
-_.org_0_0015                      00000015
-_.org_0_0018                      00000018
+_.org_0_0017                      00000017
+_.org_0_0019                      00000019
+_.org_0_001C                      0000001C
 _CONFIG                           00002007
 _CP_OFF                           00003FFF
 _CP_ON                            0000000F
@@ -256,7 +264,7 @@ d1                                00000025
 d2                                00000026
 d3                                00000027
 led1_OFF                          b'00000000'
-MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  6
+MPASM 5.87                          MAIN.ASM   10-7-2021  23:06:16         PAGE  6
 
 
 SYMBOL TABLE
@@ -265,6 +273,8 @@ SYMBOL TABLE
 led1_ON                           b'00000010'
 myPortB                           00000006
 start                             00000000
+sub_led1_off                      0000000C
+sub_led1_on                       00000008
 temp_1                            00000022
 temp_2                            00000023
 temp_3                            00000024
