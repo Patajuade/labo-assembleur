@@ -1,0 +1,278 @@
+MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;************************************************************************
+                      00002 ;* Nom de fichier:  *
+                      00003 ;* Date: XX-XX-XXXX *
+                      00004 ;* *
+                      00005 ;* Auteur:  *
+                      00006 ;* Haute Ecole Louvain en Hainaut *
+                      00007 ;************************************************************************
+                      00008 ;* Fichiers nécessaires: aucun *
+                      00009 ;************************************************************************
+                      00010 ;* Notes: *
+                      00011 ;************************************************************************
+                      00012     list p=16F84, f=INHX8M ; directive pour definir le processeur
+                      00013     list c=90, n=60 ; directives pour le listing
+                      00014     #include <p16F84a.inc> ; incorporation variables spécifiqu
+                            es
+                      00001         LIST
+                      00002 
+                      00003 ;=============================================================
+                            =============
+                      00004 ; Build date : Jan 06 2020
+                      00005 ;  MPASM PIC16F84A processor include
+                      00006 ; 
+                      00007 ;  (c) Copyright 1999-2020 Microchip Technology, All rights re
+                            served
+                      00008 ;=============================================================
+                            =============
+                      00009 
+                      00209         LIST
+                      00015     errorlevel -302 ; pas d'avertissements de bank
+                      00016     errorlevel -305 ; pas d'avertissements de fdest
+                      00017 
+2007   3FF2           00018     __config _CP_OFF & _WDT_OFF & _PWRTE_ON & _HS_OSC
+                      00019 
+                      00020 ;*************************************************************
+                            ***********
+                      00021 ;* Définitions et Variables *
+                      00022     #DEFINE led1_ON b'00000010'
+                      00023     #DEFINE led1_OFF b'00000000'
+                      00024     
+                      00025 ;*************************************************************
+                            ***********
+                      00026     cblock 0x020
+                      00027 ; déclaration de variables
+  00000020            00028 unevariable,uneautre,temp_1,temp_2,temp_3
+                      00029     endc   
+                      00030  ;equ
+                      00031 ;*************************************************************
+                            ***********
+                      00032 ;* Programme principal *
+                      00033 ;*************************************************************
+                            ***********
+                      00034 
+                      00035 ;    cpu equates (memory map)
+Warning[207]: Found label after column 1. (myPortB)
+MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+  00000006            00036     myPortB    equ    0x06        ; (p. 10 defines port addres
+                            s)
+                      00037 
+                      00038     ORG 0x000 ; vecteur reset
+                      00039 ; nop ;réservé au mode "DEBUG"
+                      00040 ;*************************************************************
+                            ***********
+                      00041  
+0000                  00042 start
+                      00043     
+                      00044 ;*************************************************************
+                            ***********   
+                      00045 ;Initialisation PortB   
+0000   1283           00046     BCF STATUS, RP0 ;
+0001   0186           00047     CLRF PORTB ; initialise portB avec un clear des outputs
+0002   1683           00048     BSF STATUS, RP0 ; Select Bank 1
+                      00049     
+                      00050 ; Partie qui dit que RB7 à RB0 sont des outputs
+0003   3000           00051     MOVLW 0x00 
+0004   0086           00052     MOVWF TRISB
+                      00053 ;*************************************************************
+                            ***********
+                      00054 ;*************************************************************
+                            *********** 
+0005                  00055 MAIN
+0005   3002           00056     movlw led1_ON    ; move led1_ON in W
+0006   0086           00057     movwf myPortB        ; move W in f (ça bouge ce qu'y a dan
+                            s w dans portB)
+0007   2???           00058     call Delay
+0008   3000           00059     movlw led1_OFF ; move led1_OFF in w
+0009   0086           00060     movwf myPortB        ; move W in f (ça bouge ce qu'y a dan
+                            s w dans portB)
+000A   2???           00061     call Delay
+000B   2???           00062     goto MAIN
+                      00063 
+                      00064 ;---------------- 1s Delay -----------------------------------
+                      00065         cblock
+  00000025            00066         d1
+  00000026            00067         d2
+  00000027            00068         d3
+                      00069         endc
+                      00070 
+000C                  00071 Delay
+                      00072                         ;499994 cycles
+000C   3003           00073         movlw   0x03
+000D   00A5           00074         movwf   d1
+000E   3018           00075         movlw   0x18
+000F   00A6           00076         movwf   d2
+0010   3002           00077         movlw   0x02
+0011   00A7           00078         movwf   d3
+0012                  00079 Delay_0
+0012   0BA5           00080         decfsz  d1, f
+0013   2???           00081         goto    $+2
+0014   0BA6           00082         decfsz  d2, f
+MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0015   2???           00083         goto    $+2
+0016   0BA7           00084         decfsz  d3, f
+0017   2???           00085         goto    Delay_0
+                      00086 
+                      00087                         ;2 cycles
+0018   2???           00088         goto    $+1
+                      00089 
+                      00090                         ;4 cycles (including call)
+0019   0008           00091         return
+                      00092     
+Warning[205]: Found directive in column 1. (end)
+3FF2                  00093 end
+MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  4
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+C                                 00000000
+DC                                00000001
+Delay                             0000000C
+Delay_0                           00000012
+EEADR                             00000009
+EECON1                            00000088
+EECON2                            00000089
+EEDATA                            00000008
+EEIE                              00000006
+EEIF                              00000004
+F                                 00000001
+FSR                               00000004
+GIE                               00000007
+INDF                              00000000
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+IRP                               00000007
+MAIN                              00000005
+NOT_PD                            00000003
+NOT_RBPU                          00000007
+NOT_TO                            00000004
+OPTION_REG                        00000081
+PCL                               00000002
+PCLATH                            0000000A
+PORTA                             00000005
+PORTB                             00000006
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RD                                00000000
+RP0                               00000005
+RP1                               00000006
+STATUS                            00000003
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  5
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T0SE                              00000004
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TRISA                             00000085
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISB                             00000086
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+TRISB7                            00000007
+W                                 00000000
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+Z                                 00000002
+_.org_0_0013                      00000013
+_.org_0_0015                      00000015
+_.org_0_0018                      00000018
+_CONFIG                           00002007
+_CP_OFF                           00003FFF
+_CP_ON                            0000000F
+_DEVID1                           00002006
+_FOSC_EXTRC                       00003FFF
+_FOSC_HS                          00003FFE
+_FOSC_LP                          00003FFC
+_FOSC_XT                          00003FFD
+_HS_OSC                           00003FFE
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_LP_OSC                           00003FFC
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FF7
+_RC_OSC                           00003FFF
+_WDTE_OFF                         00003FFB
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FFB
+_WDT_ON                           00003FFF
+_XT_OSC                           00003FFD
+__16F84A                          00000001
+d1                                00000025
+d2                                00000026
+d3                                00000027
+led1_OFF                          b'00000000'
+MPASM 5.87                       TESTLED.ASM   10-3-2021  20:01:11         PAGE  6
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+led1_ON                           b'00000010'
+myPortB                           00000006
+start                             00000000
+temp_1                            00000022
+temp_2                            00000023
+temp_3                            00000024
+uneautre                          00000021
+unevariable                       00000020
+
+Errors   :     0
+Warnings :     2 reported,     0 suppressed
+Messages :     0 reported,     1 suppressed
+
+
