@@ -53,14 +53,22 @@ start
 ;************************************************************************
 ;************************************************************************ 
 MAIN
+    call sub_led1_on
+    call sub_led1_off
+    goto MAIN
+    
+sub_led1_on
     movlw led1_ON    ; move led1_ON in W
     movwf myPortB        ; move W in f (ça bouge ce qu'y a dans w dans portB)
     call Delay
+    return
+    
+sub_led1_off
     movlw led1_OFF ; move led1_OFF in w
     movwf myPortB        ; move W in f (ça bouge ce qu'y a dans w dans portB)
     call Delay
-    goto MAIN
-
+    return
+    
 ;---------------- 1s Delay -----------------------------------
 	cblock
 	d1
