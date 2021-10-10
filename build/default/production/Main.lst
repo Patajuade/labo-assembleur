@@ -1,4 +1,4 @@
-MPASM 5.87                          MAIN.ASM   10-8-2021  15:08:28         PAGE  1
+MPASM 5.87                          MAIN.ASM   10-10-2021  19:06:04         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -40,120 +40,128 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00020 ;*************************************************************
                             ***********
                       00021 ;* Définitions et Variables *
-                      00022     #DEFINE led1_ON b'00000010'
+                      00022     #DEFINE led1_ON b'11111111' ;Define c'est comme déclarer d
+                            es constantes
                       00023     #DEFINE led1_OFF b'00000000'
                       00024     #DEFINE Button_RB1_PRESSED  b'00000000'
                       00025     #DEFINE Button_RB1_RELEASED b'00000001'
-                      00026     
-                      00027 ;*************************************************************
+                      00026     ; Quand y'a un # (devant include et define) c'est une dire
+                            ctive de 
+                      00027     ;précompilation càd que c'est pas le programme qui fait la
+                             commande, c'est 
+                      00028     ;une commande pour le compilateur
+                      00029 ;*************************************************************
                             ***********
-                      00028     cblock 0x020
-                      00029 ; déclaration de variables
-  00000020            00030 unevariable,uneautre,temp_1,temp_2,temp_3
-                      00031     endc   
-                      00032  ;equ
-                      00033 ;*************************************************************
-                            ***********
-                      00034 ;* Programme principal *
+                      00030     cblock 0x020
+                      00031 ; déclaration de variables
+  00000020            00032 unevariable,uneautre,temp_1,temp_2,temp_3
+                      00033     endc   
+                      00034  ;equ
                       00035 ;*************************************************************
-                            ***********
-                      00036 
-MPASM 5.87                          MAIN.ASM   10-8-2021  15:08:28         PAGE  2
+MPASM 5.87                          MAIN.ASM   10-10-2021  19:06:04         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00037 ;    cpu equates (memory map)
-Warning[207]: Found label after column 1. (myPortB)
-  00000006            00038     myPortB    equ    0x06 ;Definit l'addresse du portB
-Warning[207]: Found label after column 1. (myPortA)
-  00000005            00039     myPortA    equ    0x05 ;Definit l'addresse du portA
-                      00040     ORG 0x000 ; vecteur reset
-                      00041 ;*************************************************************
                             ***********
-                      00042  
-0000                  00043 start
-                      00044     
-                      00045 ;*************************************************************
+                      00036 ;* Programme principal *
+                      00037 ;*************************************************************
+                            ***********
+                      00038 
+                      00039 ;    cpu equates (memory map)
+                      00040     ;myPortB    equ    0x06 ;Definit l'addresse du portB quelq
+                            ue soit la bank 
+                      00041                             ;dans laquelle je me trouve j'ai l
+                            e droit d'utiliser PORTB
+                      00042     ;myPortA    equ    0x05 ;Definit l'addresse du portA
+                      00043     ORG 0x000 ; vecteur reset
+                      00044 ;*************************************************************
+                            ***********
+                      00045  
+0000                  00046 start
+                      00047     
+                      00048 ;*************************************************************
                             ***********   
-                      00046 ;Initialisation PortB  
-0000   1283           00047     BCF STATUS, RP0 ;on clear le bit b dans f
-0001   0186           00048     CLRF PORTB ; initialise portB avec un clear des outputs
-0002   1683           00049     BSF STATUS, RP0 ; Select Bank 1    
-                      00050 ; Partie qui dit que RB7 à RB0 sont des outputs
-0003   3000           00051     MOVLW 0x00 ;0x00 = output
-0004   0086           00052     MOVWF TRISB
-                      00053 
-                      00054 ;Initalisation PortA    p15 et/ou 39
-0005   1283           00055     BCF STATUS, RP0 ;
-0006   0185           00056     CLRF PORTA ; initialise portB avec un clear des outputs
-0007   1683           00057     BSF STATUS, RP0 ; Select Bank 1 
-                      00058 ;Partie qui dit que RA1 est un input
-0008   3001           00059     MOVLW 0x01 ;0x01 = input
-0009   0085           00060     MOVWF TRISA ;on met 1 dans trisA : input
-                      00061     
+                      00049 ;Initialisation PortB et PortA p15
+0000   1283           00050     BCF STATUS, RP0 ;on clear le bit 5 de STATUS, ce qui perme
+                            t de selectionner bank0
+0001   0186           00051     CLRF PORTB ; initialise portB avec un clear des outputs
+0002   0185           00052     CLRF PORTA
+0003   1683           00053     BSF STATUS, RP0 ; On set le bit 5 de STATUS à 1, donc bank
+                            1 est selectionnée    
+                      00054 ; Partie qui dit que RB7 à RB0 sont des outputs
+0004   3000           00055     MOVLW 0x00 ;0x00 = hexa / b'0' = binaire / 0 = decimal on 
+                            doit préciser le système de numération
+0005   0086           00056     MOVWF TRISB ; on met 0x00 dans TRISB, ce qui met PORTB en 
+                            output
+                      00057 ;Partie qui dit que RA4 à RA0 sont des inputs
+0006   3001           00058     MOVLW 0x01 ;0x01 = input
+0007   0085           00059     MOVWF TRISA ;on met 1 dans trisA : input
+                      00060     
+0008   1283           00061     BCF STATUS, RP0 ;On repasse dans la bank0 pour pouvoir uti
+                            liser PORTA et B sans utiliser les trucs à la ligne 40
                       00062 ;*************************************************************
                             ***********
                       00063 ;*************************************************************
                             *********** 
-000A                  00064 MAIN
-000A   2???           00065     call sub_led1_on
-000B   2???           00066     call sub_led1_off
-000C   2???           00067     goto MAIN
+0009                  00064 MAIN
+0009   2???           00065     call sub_led1_on
+000A   2???           00066     call sub_led1_off
+000B   2???           00067     goto MAIN
                       00068     
-000D                  00069 sub_led1_on
-000D   3002           00070     movlw led1_ON    ; move led1_ON in W
-000E   0086           00071     movwf myPortB        ; move W in f (ça bouge ce qu'y a dan
+000C                  00069 sub_led1_on
+000C   30FF           00070     movlw led1_ON    ; move led1_ON dans W
+000D   0086           00071     movwf PORTB        ; move W dans f (ça bouge ce qu'y a dan
                             s w dans portB)
-000F   2???           00072     call Delay
-0010   0008           00073     return
+000E   2???           00072     call Delay
+000F   0008           00073     return
                       00074     
-0011                  00075 sub_led1_off
-0011   3000           00076     movlw led1_OFF ; move led1_OFF in w
-0012   0086           00077     movwf myPortB        ; move W in f (ça bouge ce qu'y a dan
-                            s w dans portB)
-0013   2???           00078     call Delay
-0014   0008           00079     return
-                      00080     
-                      00081 ;---------------- 1s Delay -----------------------------------
-                      00082         cblock
-MPASM 5.87                          MAIN.ASM   10-8-2021  15:08:28         PAGE  3
+0010                  00075 sub_led1_off
+MPASM 5.87                          MAIN.ASM   10-10-2021  19:06:04         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
+0010   3000           00076     movlw led1_OFF ; move led1_OFF dans w
+0011   0086           00077     movwf PORTB        ; move W dans f (ça bouge ce qu'y a dan
+                            s w dans portB)
+0012   2???           00078     call Delay
+0013   0008           00079     return
+                      00080     
+                      00081 ;---------------- 1s Delay -----------------------------------
+                      00082         cblock
   00000025            00083         d1
   00000026            00084         d2
   00000027            00085         d3
                       00086         endc
                       00087 
-0015                  00088 Delay
+0014                  00088 Delay
                       00089                         ;499994 cycles
-0015   3003           00090         movlw   0x03
-0016   00A5           00091         movwf   d1
-0017   3018           00092         movlw   0x18
-0018   00A6           00093         movwf   d2
-0019   3002           00094         movlw   0x02
-001A   00A7           00095         movwf   d3
-001B                  00096 Delay_0
-001B   0BA5           00097         decfsz  d1, f
-001C   2???           00098         goto    $+2
-001D   0BA6           00099         decfsz  d2, f
-001E   2???           00100         goto    $+2
-001F   0BA7           00101         decfsz  d3, f
-0020   2???           00102         goto    Delay_0
+0014   3003           00090         movlw   0x03
+0015   00A5           00091         movwf   d1
+0016   3018           00092         movlw   0x18
+0017   00A6           00093         movwf   d2
+0018   3002           00094         movlw   0x02
+0019   00A7           00095         movwf   d3
+001A                  00096 Delay_0
+001A   0BA5           00097         decfsz  d1, f
+001B   2???           00098         goto    $+2
+001C   0BA6           00099         decfsz  d2, f
+001D   2???           00100         goto    $+2
+001E   0BA7           00101         decfsz  d3, f
+001F   2???           00102         goto    Delay_0
                       00103 
                       00104                         ;2 cycles
-0021   2???           00105         goto    $+1
+0020   2???           00105         goto    $+1
                       00106 
                       00107                         ;4 cycles (including call)
-0022   0008           00108         return
+0021   0008           00108         return
                       00109     
 Warning[205]: Found directive in column 1. (end)
 3FF2                  00110 end
-MPASM 5.87                          MAIN.ASM   10-8-2021  15:08:28         PAGE  4
+MPASM 5.87                          MAIN.ASM   10-10-2021  19:06:04         PAGE  4
 
 
 SYMBOL TABLE
@@ -163,8 +171,8 @@ Button_RB1_PRESSED                b'00000000'
 Button_RB1_RELEASED               b'00000001'
 C                                 00000000
 DC                                00000001
-Delay                             00000015
-Delay_0                           0000001B
+Delay                             00000014
+Delay_0                           0000001A
 EEADR                             00000009
 EECON1                            00000088
 EECON2                            00000089
@@ -180,7 +188,7 @@ INTE                              00000004
 INTEDG                            00000006
 INTF                              00000001
 IRP                               00000007
-MAIN                              0000000A
+MAIN                              00000009
 NOT_PD                            00000003
 NOT_RBPU                          00000007
 NOT_TO                            00000004
@@ -213,7 +221,7 @@ RP0                               00000005
 RP1                               00000006
 STATUS                            00000003
 T0CS                              00000005
-MPASM 5.87                          MAIN.ASM   10-8-2021  15:08:28         PAGE  5
+MPASM 5.87                          MAIN.ASM   10-10-2021  19:06:04         PAGE  5
 
 
 SYMBOL TABLE
@@ -245,9 +253,9 @@ WR                                00000001
 WREN                              00000002
 WRERR                             00000003
 Z                                 00000002
-_.org_0_001C                      0000001C
-_.org_0_001E                      0000001E
-_.org_0_0021                      00000021
+_.org_0_001B                      0000001B
+_.org_0_001D                      0000001D
+_.org_0_0020                      00000020
 _CONFIG                           00002007
 _CP_OFF                           00003FFF
 _CP_ON                            0000000F
@@ -273,7 +281,7 @@ _XT_OSC                           00003FFD
 __16F84A                          00000001
 d1                                00000025
 d2                                00000026
-MPASM 5.87                          MAIN.ASM   10-8-2021  15:08:28         PAGE  6
+MPASM 5.87                          MAIN.ASM   10-10-2021  19:06:04         PAGE  6
 
 
 SYMBOL TABLE
@@ -281,12 +289,10 @@ SYMBOL TABLE
 
 d3                                00000027
 led1_OFF                          b'00000000'
-led1_ON                           b'00000010'
-myPortA                           00000005
-myPortB                           00000006
+led1_ON                           b'11111111'
 start                             00000000
-sub_led1_off                      00000011
-sub_led1_on                       0000000D
+sub_led1_off                      00000010
+sub_led1_on                       0000000C
 temp_1                            00000022
 temp_2                            00000023
 temp_3                            00000024
@@ -294,7 +300,7 @@ uneautre                          00000021
 unevariable                       00000020
 
 Errors   :     0
-Warnings :     3 reported,     0 suppressed
+Warnings :     1 reported,     0 suppressed
 Messages :     0 reported,     2 suppressed
 
 
