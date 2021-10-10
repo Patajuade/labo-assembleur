@@ -21,6 +21,8 @@
 ;* Définitions et Variables *
     #DEFINE led1_ON b'00000010'
     #DEFINE led1_OFF b'00000000'
+    #DEFINE Button_RB1_PRESSED  b'00000000'
+    #DEFINE Button_RB1_RELEASED b'00000001'
     
 ;************************************************************************
     cblock 0x020
@@ -33,23 +35,30 @@ unevariable,uneautre,temp_1,temp_2,temp_3
 ;************************************************************************
 
 ;    cpu equates (memory map)
-    myPortB    equ    0x06        ; (p. 10 defines port address)
-
+    myPortB    equ    0x06 ;Definit l'addresse du portB
+    myPortA    equ    0x05 ;Definit l'addresse du portA
     ORG 0x000 ; vecteur reset
-; nop ;réservé au mode "DEBUG"
 ;************************************************************************
  
 start
     
 ;************************************************************************   
-;Initialisation PortB   
-    BCF STATUS, RP0 ;
+;Initialisation PortB  
+    BCF STATUS, RP0 ;on clear le bit b dans f
     CLRF PORTB ; initialise portB avec un clear des outputs
-    BSF STATUS, RP0 ; Select Bank 1
-    
+    BSF STATUS, RP0 ; Select Bank 1    
 ; Partie qui dit que RB7 à RB0 sont des outputs
-    MOVLW 0x00 
+    MOVLW 0x00 ;0x00 = output
     MOVWF TRISB
+
+;Initalisation PortA	p15 et/ou 39
+    BCF STATUS, RP0 ;
+    CLRF PORTA ; initialise portB avec un clear des outputs
+    BSF STATUS, RP0 ; Select Bank 1 
+;Partie qui dit que RA1 est un input
+    MOVLW 0x01 ;0x01 = input
+    MOVWF TRISA ;on met 1 dans trisA : input
+    
 ;************************************************************************
 ;************************************************************************ 
 MAIN
@@ -58,14 +67,14 @@ MAIN
     goto MAIN
     
 sub_led1_on
-    movlw led1_ON    ; move led1_ON in W
-    movwf myPortB        ; move W in f (ça bouge ce qu'y a dans w dans portB)
+    movlw led1_ON    ; move led1_ON dans W
+    movwf myPortB        ; move W dans f (ça bouge ce qu'y a dans w dans portB)
     call Delay
     return
     
 sub_led1_off
-    movlw led1_OFF ; move led1_OFF in w
-    movwf myPortB        ; move W in f (ça bouge ce qu'y a dans w dans portB)
+    movlw led1_OFF ; move led1_OFF dans w
+    movwf myPortB        ; move W dans f (ça bouge ce qu'y a dans w dans portB)
     call Delay
     return
     
