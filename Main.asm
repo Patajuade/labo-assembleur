@@ -55,37 +55,50 @@ start
     MOVLW 0x00 ;0x00 = hexa / b'0' = binaire / 0 = decimal on doit préciser le système de numération
     MOVWF TRISB ; on met 0x00 dans TRISB, ce qui met PORTB en output
 ;Partie qui dit que RA4 à RA0 sont des inputs
-    MOVLW 0x01 ;0x01 = input
+    MOVLW b'00000111' ;0x01 = input
     MOVWF TRISA ;on met 1 dans trisA : input
     
     BCF STATUS, RP0 ;On repasse dans la bank0 pour pouvoir utiliser PORTA et B sans utiliser les trucs à la ligne 40
 ;************************************************************************
 ;************************************************************************ 
 MAIN
-    call sub_led1_on
-    call sub_led1_off
-    goto MAIN
+    CALL CHECK_RA0
+    GOTO MAIN
     
-sub_led1_on
+CHECK_RA0 ;Subroutine qui permet d'allumer/éteindre la led
+    BTFSS PORTA,RA0
+    RETURN
+    CALL DELAY_100MS
+    BTFSC PORTB,RB0
+    GOTO LED_OFF
+LED_ON
+    BTFSC PORTA,RA0
+    GOTO LED_ON
+    BSF PORTB,RB0
+    GOTO MAIN
+LED_OFF
+    BTFSC PORTA,RA0
+    GOTO LED_OFF
+    BCF PORTB,RB0
+    GOTO MAIN
+    
+BLINK_ALL_LEDS
     movlw led1_ON    ; move led1_ON dans W
     movwf PORTB        ; move W dans f (ça bouge ce qu'y a dans w dans portB)
-    call Delay
-    return
-    
-sub_led1_off
+    call DELAY_1S
     movlw led1_OFF ; move led1_OFF dans w
     movwf PORTB        ; move W dans f (ça bouge ce qu'y a dans w dans portB)
-    call Delay
+    call DELAY_1S
     return
     
-;---------------- 1s Delay -----------------------------------
+;------------------------------- Delay -----------------------------------
 	cblock
 	d1
 	d2
 	d3
 	endc
 
-Delay
+DELAY_1S
 			;499994 cycles
 	movlw	0x03
 	movwf	d1
@@ -93,13 +106,13 @@ Delay
 	movwf	d2
 	movlw	0x02
 	movwf	d3
-Delay_0
+__DELAY_1S
 	decfsz	d1, f
 	goto	$+2
 	decfsz	d2, f
 	goto	$+2
 	decfsz	d3, f
-	goto	Delay_0
+	goto	__DELAY_1S
 
 			;2 cycles
 	goto	$+1
@@ -107,4 +120,19 @@ Delay_0
 			;4 cycles (including call)
 	return
     
+DELAY_100MS
+			;49998 cycles
+	movlw	0x0F
+	movwf	d1
+	movlw	0x28
+	movwf	d2
+__DELAY_100MS
+	decfsz	d1, f
+	goto	$+2
+	decfsz	d2, f
+	goto	__DELAY_100MS
+
+			;2 cycles
+	goto	$+1
+	RETURN
 end
