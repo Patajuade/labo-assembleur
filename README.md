@@ -1,7 +1,7 @@
 # Documentation
 ## Description d'une routine pour un bouton (avec gestion du rebond)
 
-```assembly
+```c
 CHECK_RA0		
     BTFSS PORTA,RA0	
     RETURN		
