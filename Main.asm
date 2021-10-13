@@ -93,19 +93,23 @@ LED_OFF
 
 
 BLINK_ALL_LEDS_ONCE
-    movlw led1_ON	; move led1_ON dans le W
-    movwf PORTB		; move W dans f (ça bouge led1_ON dans w dans portB)
+    CALL LIGHT_ON_PORTB
     call DELAY_WITH_CHECK_BUTTON
-    movlw led1_OFF	; move led1_OFF dans w
-    movwf PORTB		; move W dans f (ça bouge led1_OFF dans w dans portB)
+    CALL LIGHT_OFF_PORTB
     call DELAY_WITH_CHECK_BUTTON
-    return
+    RETURN
+
+LIGHT_ON_PORTB
+    MOVLW b'11111111'	; 
+    MOVWF PORTB		; 
+    RETURN
+    
+LIGHT_OFF_PORTB
+    MOVLW b'00000000'	; 
+    MOVWF PORTB		; 
+    RETURN    
     
 DELAY_WITH_CHECK_BUTTON
-    CALL DELAY_100MS
-    CALL CHECK_RA0
-    CALL DELAY_100MS
-    CALL CHECK_RA0
     CALL DELAY_100MS
     CALL CHECK_RA0
     CALL DELAY_100MS
