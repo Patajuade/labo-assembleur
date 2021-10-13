@@ -29,7 +29,7 @@
 ;************************************************************************
     cblock 0x020
 ; déclaration de variables
-unevariable,uneautre,temp_1,temp_2,temp_3,IS_LED_BLINKING
+IS_LED_BLINKING,d1,d2,NB_BUTTON_CHECK
     endc   
  ;equ
 ;************************************************************************
@@ -71,32 +71,38 @@ CHECK_RA0		;Subroutine qui permet d'allumer/éteindre la led
     BTFSS PORTA,RA0	;On teste les bits qu'on a dans f (donc PORTA), s'ils sont =1 on skip l'instruction suivante immédiate et on va à celle d'après
     RETURN		;Return execute l'instruction après le call de la fonction CHECK_RA0
 			;Donc là si les bits PORTA = 0 on vient ici, si les bits PORTA = 1 on la saute
-    ;CALL DELAY_100MS	;Delay de 100ms pour éviter les rebonds du bouton
     BTFSC IS_LED_BLINKING,0	;
-    GOTO LED_OFF	;
-LED_ON
-    BTFSC PORTA,RA0	;si les bits de PORTA=0 on skip l'instruction suivante immédiate (le bouton n'est pas appuyé donc on allume pas les leds)
-    GOTO LED_ON		;on va ici que si les bits de PORTA=1 (donc si le bouton est appuyé)
+    GOTO STOP_LED_BLINKING	;
+START_LED_BLINKING
+    CALL BOUNCING_BUTTON_SECURITY
+    CALL SET_IS_LED_BLINKING
+    GOTO MAIN
+STOP_LED_BLINKING
+    CALL BOUNCING_BUTTON_SECURITY
+    CALL CLEAR_IS_LED_BLINKING
+    CALL LIGHT_ON_PORTB
+    GOTO MAIN
+    
+SET_IS_LED_BLINKING
     MOVLW 0x01
     MOVWF IS_LED_BLINKING
-    ;BSF PORTB,RB0	;on set les bits de PORTB à 1 -> les leds s'allument
-    GOTO MAIN
-LED_OFF
-    BTFSC PORTA,RA0	;si les bits de PORTA=0 on skip l'instruction suivante immédiate (le bouton n'est pas appuyé donc on allume pas les leds)
-    GOTO LED_OFF	;on va ici que si les bits de PORTA=1 (donc si le bouton est appuyé)
+    RETURN
+    
+CLEAR_IS_LED_BLINKING
     MOVLW 0x00
     MOVWF IS_LED_BLINKING
-    movlw led1_OFF	; move led1_OFF dans w
-    movwf PORTB		; move W dans f (ça bouge led1_OFF dans w dans portB)
-    ;BCF PORTB,RB0	;on clear les bits de PORTB  -> les leds s'éteignent
-    GOTO MAIN
-
+    RETURN
+    
+BOUNCING_BUTTON_SECURITY
+    BTFSC PORTA,RA0	;si les bits de PORTA=0 on skip l'instruction suivante immédiate (le bouton n'est pas appuyé donc on allume pas les leds)
+    GOTO BOUNCING_BUTTON_SECURITY
+    RETURN
 
 BLINK_ALL_LEDS_ONCE
     CALL LIGHT_ON_PORTB
-    call DELAY_WITH_CHECK_BUTTON
+    CALL DELAY_WITH_CHECK_BUTTON
     CALL LIGHT_OFF_PORTB
-    call DELAY_WITH_CHECK_BUTTON
+    CALL DELAY_WITH_CHECK_BUTTON
     RETURN
 
 LIGHT_ON_PORTB
@@ -110,56 +116,27 @@ LIGHT_OFF_PORTB
     RETURN    
     
 DELAY_WITH_CHECK_BUTTON
-    CALL DELAY_100MS
+    MOVLW 0x20
+    MOVWF NB_BUTTON_CHECK
+DELAY_WITH_CHECK_BUTTON_0
+    DECFSZ NB_BUTTON_CHECK,f
+    GOTO DELAY_WITH_CHECK_BUTTON_CHECK
+    RETURN
+DELAY_WITH_CHECK_BUTTON_CHECK
+    CALL DELAY
     CALL CHECK_RA0
-    CALL DELAY_100MS
-    CALL CHECK_RA0
-    CALL DELAY_100MS
-    CALL CHECK_RA0
-    CALL DELAY_100MS
-    CALL CHECK_RA0
-;------------------------------- Delay -----------------------------------
-	cblock
-	d1
-	d2
-	d3
-	endc
+    GOTO DELAY_WITH_CHECK_BUTTON_0
 
-DELAY_1S
-			;499994 cycles
-	movlw	0x03
-	movwf	d1
-	movlw	0x18
-	movwf	d2
-	movlw	0x02
-	movwf	d3
-__DELAY_1S
-	decfsz	d1, f
-	goto	$+2
-	decfsz	d2, f
-	goto	$+2
-	decfsz	d3, f
-	goto	__DELAY_1S
-
-			;2 cycles
-	goto	$+1
-
-			;4 cycles (including call)
-	return
-    
-DELAY_100MS
-			;49998 cycles
-	movlw	0x0F
-	movwf	d1
-	movlw	0x28
-	movwf	d2
-__DELAY_100MS
-	decfsz	d1, f
-	goto	$+2
-	decfsz	d2, f
-	goto	__DELAY_100MS
-
-			;2 cycles
-	goto	$+1
-	RETURN
-end
+DELAY
+    MOVLW	0xE7
+    MOVWF	d1
+    MOVLW	0x04
+    MOVWF	d2
+DELAY_0
+    DECFSZ	d1, f
+    GOTO	$+2
+    DECFSZ	d2, f
+    GOTO	DELAY_0
+    GOTO	$+1
+    RETURN
+END
