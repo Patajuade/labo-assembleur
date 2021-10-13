@@ -1,4 +1,4 @@
-MPASM 5.87                          MAIN.ASM   10-11-2021  19:38:07         PAGE  1
+MPASM 5.87                          MAIN.ASM   10-13-2021  21:31:58         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -54,11 +54,11 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                             ***********
                       00030     cblock 0x020
                       00031 ; déclaration de variables
-  00000020            00032 unevariable,uneautre,temp_1,temp_2,temp_3
+  00000020            00032 unevariable,uneautre,temp_1,temp_2,temp_3,IS_LED_BLINKING
                       00033     endc   
                       00034  ;equ
                       00035 ;*************************************************************
-MPASM 5.87                          MAIN.ASM   10-11-2021  19:38:07         PAGE  2
+MPASM 5.87                          MAIN.ASM   10-13-2021  21:31:58         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -107,128 +107,149 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00063 ;*************************************************************
                             *********** 
 0009                  00064 MAIN
-0009   2???           00065     CALL CHECK_RA0 
-000A   2???           00066     GOTO MAIN
-                      00067     
-000B                  00068 CHECK_RA0               ;Subroutine qui permet d'allumer/étein
+0009   2???           00065     CALL CHECK_RA0
+000A   1825           00066     BTFSC IS_LED_BLINKING, 0
+000B   2???           00067     CALL BLINK_ALL_LEDS_ONCE
+000C   2???           00068     GOTO MAIN
+                      00069     
+000D                  00070 CHECK_RA0               ;Subroutine qui permet d'allumer/étein
                             dre la led
-000B   1C05           00069     BTFSS PORTA,RA0     ;On teste les bits qu'on a dans f (don
+000D   1C05           00071     BTFSS PORTA,RA0     ;On teste les bits qu'on a dans f (don
                             c PORTA), s'ils sont =1 on skip l'instruction suivante immédia
                             te et on va à celle d'après
-000C   0008           00070     RETURN              ;Return execute l'instruction après le
+000E   0008           00072     RETURN              ;Return execute l'instruction après le
+MPASM 5.87                          MAIN.ASM   10-13-2021  21:31:58         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
                              call de la fonction CHECK_RA0
-                      00071                         ;Donc là si les bits PORTA = 0 on vien
-MPASM 5.87                          MAIN.ASM   10-11-2021  19:38:07         PAGE  3
-
-
-LOC  OBJECT CODE     LINE SOURCE TEXT
-  VALUE
-
+                      00073                         ;Donc là si les bits PORTA = 0 on vien
                             t ici, si les bits PORTA = 1 on la saute
-                      00072     ;CALL DELAY_100MS   ;Delay de 100ms pour éviter les rebond
+                      00074     ;CALL DELAY_100MS   ;Delay de 100ms pour éviter les rebond
                             s du bouton
-000D   1806           00073     BTFSC PORTB,RB0     ;si les bits de PORTB=0 on skip l'inst
-                            ruction suivante immédiate (donc si la led n'est pas allumée)
-000E   2???           00074     GOTO LED_OFF        ;D'après l'instruction au dessus, si l
-                            es bits de PORTB =0 on skip ici, sinon on skip pas et la led s
-                            'éteint
-000F                  00075 LED_ON
-000F   1805           00076     BTFSC PORTA,RA0     ;si les bits de PORTA=0 on skip l'inst
+000F   1825           00075     BTFSC IS_LED_BLINKING,0     ;
+0010   2???           00076     GOTO LED_OFF        ;
+0011                  00077 LED_ON
+0011   1805           00078     BTFSC PORTA,RA0     ;si les bits de PORTA=0 on skip l'inst
                             ruction suivante immédiate (le bouton n'est pas appuyé donc on
                              allume pas les leds)
-0010   2???           00077     GOTO LED_ON         ;on va ici que si les bits de PORTA=1 
+0012   2???           00079     GOTO LED_ON         ;on va ici que si les bits de PORTA=1 
                             (donc si le bouton est appuyé)
-0011   1406           00078     BSF PORTB,RB0       ;on set les bits de PORTB à 1 -> les l
+0013   3001           00080     MOVLW 0x01
+0014   00A5           00081     MOVWF IS_LED_BLINKING
+                      00082     ;BSF PORTB,RB0      ;on set les bits de PORTB à 1 -> les l
                             eds s'allument
-0012   0008           00079     RETURN
-0013                  00080 LED_OFF
-0013   1805           00081     BTFSC PORTA,RA0     ;si les bits de PORTA=0 on skip l'inst
+0015   2???           00083     GOTO MAIN
+0016                  00084 LED_OFF
+0016   1805           00085     BTFSC PORTA,RA0     ;si les bits de PORTA=0 on skip l'inst
                             ruction suivante immédiate (le bouton n'est pas appuyé donc on
                              allume pas les leds)
-0014   2???           00082     GOTO LED_OFF        ;on va ici que si les bits de PORTA=1 
+0017   2???           00086     GOTO LED_OFF        ;on va ici que si les bits de PORTA=1 
                             (donc si le bouton est appuyé)
-0015   1006           00083     BCF PORTB,RB0       ;on clear les bits de PORTB  -> les le
-                            ds s'éteignent
-0016   0008           00084     RETURN
-                      00085     
-0017                  00086 BLINK_ALL_LEDS
-0017   30FF           00087     movlw led1_ON       ; move led1_ON dans le W
-0018   0086           00088     movwf PORTB         ; move W dans f (ça bouge led1_ON dans
-                             w dans portB)
-0019   2???           00089     call DELAY_1S
-001A   3000           00090     movlw led1_OFF      ; move led1_OFF dans w
-001B   0086           00091     movwf PORTB         ; move W dans f (ça bouge led1_OFF dan
+0018   3000           00087     MOVLW 0x00
+0019   00A5           00088     MOVWF IS_LED_BLINKING
+001A   3000           00089     movlw led1_OFF      ; move led1_OFF dans w
+001B   0086           00090     movwf PORTB         ; move W dans f (ça bouge led1_OFF dan
                             s w dans portB)
-001C   2???           00092     call DELAY_1S
-001D   0008           00093     return
-                      00094     
-                      00095 ;------------------------------- Delay -----------------------
-                            ------------
-                      00096         cblock
-  00000025            00097         d1
-  00000026            00098         d2
-  00000027            00099         d3
-                      00100         endc
-                      00101 
-001E                  00102 DELAY_1S
-                      00103                         ;499994 cycles
-001E   3003           00104         movlw   0x03
-001F   00A5           00105         movwf   d1
-0020   3018           00106         movlw   0x18
-0021   00A6           00107         movwf   d2
-0022   3002           00108         movlw   0x02
-0023   00A7           00109         movwf   d3
-MPASM 5.87                          MAIN.ASM   10-11-2021  19:38:07         PAGE  4
+                      00091     ;BCF PORTB,RB0      ;on clear les bits de PORTB  -> les le
+                            ds s'éteignent
+001C   2???           00092     GOTO MAIN
+                      00093 
+                      00094 
+001D                  00095 BLINK_ALL_LEDS_ONCE
+001D   30FF           00096     movlw led1_ON       ; move led1_ON dans le W
+001E   0086           00097     movwf PORTB         ; move W dans f (ça bouge led1_ON dans
+                             w dans portB)
+001F   2???           00098     call DELAY_WITH_CHECK_BUTTON
+0020   3000           00099     movlw led1_OFF      ; move led1_OFF dans w
+0021   0086           00100     movwf PORTB         ; move W dans f (ça bouge led1_OFF dan
+                            s w dans portB)
+0022   2???           00101     call DELAY_WITH_CHECK_BUTTON
+0023   0008           00102     return
+                      00103     
+0024                  00104 DELAY_WITH_CHECK_BUTTON
+0024   2???           00105     CALL DELAY_100MS
+0025   2???           00106     CALL CHECK_RA0
+0026   2???           00107     CALL DELAY_100MS
+0027   2???           00108     CALL CHECK_RA0
+0028   2???           00109     CALL DELAY_100MS
+0029   2???           00110     CALL CHECK_RA0
+002A   2???           00111     CALL DELAY_100MS
+002B   2???           00112     CALL CHECK_RA0
+MPASM 5.87                          MAIN.ASM   10-13-2021  21:31:58         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0024                  00110 __DELAY_1S
-0024   0BA5           00111         decfsz  d1, f
-0025   2???           00112         goto    $+2
-0026   0BA6           00113         decfsz  d2, f
-0027   2???           00114         goto    $+2
-0028   0BA7           00115         decfsz  d3, f
-0029   2???           00116         goto    __DELAY_1S
-                      00117 
-                      00118                         ;2 cycles
-002A   2???           00119         goto    $+1
-                      00120 
-                      00121                         ;4 cycles (including call)
-002B   0008           00122         return
-                      00123     
-002C                  00124 DELAY_100MS
-                      00125                         ;49998 cycles
-002C   300F           00126         movlw   0x0F
-002D   00A5           00127         movwf   d1
-002E   3028           00128         movlw   0x28
-002F   00A6           00129         movwf   d2
-0030                  00130 __DELAY_100MS
-0030   0BA5           00131         decfsz  d1, f
-0031   2???           00132         goto    $+2
-0032   0BA6           00133         decfsz  d2, f
-0033   2???           00134         goto    __DELAY_100MS
-                      00135 
-                      00136                         ;2 cycles
-0034   2???           00137         goto    $+1
-0035   0008           00138         RETURN
+002C   2???           00113     CALL DELAY_100MS
+002D   2???           00114     CALL CHECK_RA0
+002E   2???           00115     CALL DELAY_100MS
+002F   2???           00116     CALL CHECK_RA0
+                      00117 ;------------------------------- Delay -----------------------
+                            ------------
+                      00118         cblock
+  00000026            00119         d1
+  00000027            00120         d2
+  00000028            00121         d3
+                      00122         endc
+                      00123 
+0030                  00124 DELAY_1S
+                      00125                         ;499994 cycles
+0030   3003           00126         movlw   0x03
+0031   00A6           00127         movwf   d1
+0032   3018           00128         movlw   0x18
+0033   00A7           00129         movwf   d2
+0034   3002           00130         movlw   0x02
+0035   00A8           00131         movwf   d3
+0036                  00132 __DELAY_1S
+0036   0BA6           00133         decfsz  d1, f
+0037   2???           00134         goto    $+2
+0038   0BA7           00135         decfsz  d2, f
+0039   2???           00136         goto    $+2
+003A   0BA8           00137         decfsz  d3, f
+003B   2???           00138         goto    __DELAY_1S
+                      00139 
+                      00140                         ;2 cycles
+003C   2???           00141         goto    $+1
+                      00142 
+                      00143                         ;4 cycles (including call)
+003D   0008           00144         return
+                      00145     
+003E                  00146 DELAY_100MS
+                      00147                         ;49998 cycles
+003E   300F           00148         movlw   0x0F
+003F   00A6           00149         movwf   d1
+0040   3028           00150         movlw   0x28
+0041   00A7           00151         movwf   d2
+0042                  00152 __DELAY_100MS
+0042   0BA6           00153         decfsz  d1, f
+0043   2???           00154         goto    $+2
+0044   0BA7           00155         decfsz  d2, f
+0045   2???           00156         goto    __DELAY_100MS
+                      00157 
+                      00158                         ;2 cycles
+0046   2???           00159         goto    $+1
+0047   0008           00160         RETURN
 Warning[205]: Found directive in column 1. (end)
-3FF2                  00139 end
-MPASM 5.87                          MAIN.ASM   10-11-2021  19:38:07         PAGE  5
+3FF2                  00161 end
+MPASM 5.87                          MAIN.ASM   10-13-2021  21:31:58         PAGE  5
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-BLINK_ALL_LEDS                    00000017
+BLINK_ALL_LEDS_ONCE               0000001D
 Button_RB1_PRESSED                b'00000000'
 Button_RB1_RELEASED               b'00000001'
 C                                 00000000
-CHECK_RA0                         0000000B
+CHECK_RA0                         0000000D
 DC                                00000001
-DELAY_100MS                       0000002C
-DELAY_1S                          0000001E
+DELAY_100MS                       0000003E
+DELAY_1S                          00000030
+DELAY_WITH_CHECK_BUTTON           00000024
 EEADR                             00000009
 EECON1                            00000088
 EECON2                            00000089
@@ -244,8 +265,9 @@ INTE                              00000004
 INTEDG                            00000006
 INTF                              00000001
 IRP                               00000007
-LED_OFF                           00000013
-LED_ON                            0000000F
+IS_LED_BLINKING                   00000025
+LED_OFF                           00000016
+LED_ON                            00000011
 MAIN                              00000009
 NOT_PD                            00000003
 NOT_RBPU                          00000007
@@ -273,14 +295,14 @@ RB5                               00000005
 RB6                               00000006
 RB7                               00000007
 RBIE                              00000003
-RBIF                              00000000
-RD                                00000000
-MPASM 5.87                          MAIN.ASM   10-11-2021  19:38:07         PAGE  6
+MPASM 5.87                          MAIN.ASM   10-13-2021  21:31:58         PAGE  6
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+RBIF                              00000000
+RD                                00000000
 RP0                               00000005
 RP1                               00000006
 STATUS                            00000003
@@ -311,11 +333,11 @@ WR                                00000001
 WREN                              00000002
 WRERR                             00000003
 Z                                 00000002
-_.org_0_0025                      00000025
-_.org_0_0027                      00000027
-_.org_0_002A                      0000002A
-_.org_0_0031                      00000031
-_.org_0_0034                      00000034
+_.org_0_0037                      00000037
+_.org_0_0039                      00000039
+_.org_0_003C                      0000003C
+_.org_0_0043                      00000043
+_.org_0_0046                      00000046
 _CONFIG                           00002007
 _CP_OFF                           00003FFF
 _CP_ON                            0000000F
@@ -333,23 +355,23 @@ _LP_OSC                           00003FFC
 _PWRTE_OFF                        00003FFF
 _PWRTE_ON                         00003FF7
 _RC_OSC                           00003FFF
-_WDTE_OFF                         00003FFB
-_WDTE_ON                          00003FFF
-MPASM 5.87                          MAIN.ASM   10-11-2021  19:38:07         PAGE  7
+MPASM 5.87                          MAIN.ASM   10-13-2021  21:31:58         PAGE  7
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+_WDTE_OFF                         00003FFB
+_WDTE_ON                          00003FFF
 _WDT_OFF                          00003FFB
 _WDT_ON                           00003FFF
 _XT_OSC                           00003FFD
 __16F84A                          00000001
-__DELAY_100MS                     00000030
-__DELAY_1S                        00000024
-d1                                00000025
-d2                                00000026
-d3                                00000027
+__DELAY_100MS                     00000042
+__DELAY_1S                        00000036
+d1                                00000026
+d2                                00000027
+d3                                00000028
 led1_OFF                          b'00000000'
 led1_ON                           b'11111111'
 start                             00000000
