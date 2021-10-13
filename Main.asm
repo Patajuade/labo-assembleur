@@ -61,12 +61,15 @@ start
     BCF STATUS, RP0	    ;On repasse dans la bank0 pour pouvoir utiliser PORTA et B sans utiliser les trucs à la ligne 40
 ;************************************************************************
 ;************************************************************************ 
+
+;Boucle principale du projet
 MAIN
     CALL CHECK_RA0
     BTFSC IS_LED_BLINKING, 0
     CALL BLINK_ALL_LEDS_ONCE
     GOTO MAIN
     
+;Toutes les opérations servant à utiliser le bouton RA0    
 CHECK_RA0		;Subroutine qui permet d'allumer/éteindre la led
     BTFSS PORTA,RA0	;On teste les bits qu'on a dans f (donc PORTA), s'ils sont =1 on skip l'instruction suivante immédiate et on va à celle d'après
     RETURN		;Return execute l'instruction après le call de la fonction CHECK_RA0
@@ -82,39 +85,46 @@ STOP_LED_BLINKING
     CALL CLEAR_IS_LED_BLINKING
     CALL LIGHT_ON_PORTB
     GOTO MAIN
-    
-SET_IS_LED_BLINKING
-    MOVLW 0x01
-    MOVWF IS_LED_BLINKING
-    RETURN
-    
-CLEAR_IS_LED_BLINKING
-    MOVLW 0x00
-    MOVWF IS_LED_BLINKING
-    RETURN
-    
-BOUNCING_BUTTON_SECURITY
-    BTFSC PORTA,RA0	;si les bits de PORTA=0 on skip l'instruction suivante immédiate (le bouton n'est pas appuyé donc on allume pas les leds)
-    GOTO BOUNCING_BUTTON_SECURITY
-    RETURN
 
+;Allume puis éteint les leds, pendant le délais d'attente check le bouton
 BLINK_ALL_LEDS_ONCE
     CALL LIGHT_ON_PORTB
     CALL DELAY_WITH_CHECK_BUTTON
     CALL LIGHT_OFF_PORTB
     CALL DELAY_WITH_CHECK_BUTTON
     RETURN
-
+    
+;Allume toutes les leds
 LIGHT_ON_PORTB
     MOVLW b'11111111'	; 
     MOVWF PORTB		; 
     RETURN
-    
+
+;Eteint toutes les leds
 LIGHT_OFF_PORTB
     MOVLW b'00000000'	; 
     MOVWF PORTB		; 
-    RETURN    
+    RETURN 
     
+;Set à 1 le 1er bit de la variable qui sert à savoir si les leds doivent blink ou pas    
+SET_IS_LED_BLINKING
+    MOVLW 0x01
+    MOVWF IS_LED_BLINKING
+    RETURN
+    
+;Clear le 1er bit de la variable qui sert à savoir si les leds doivent blink ou pas
+CLEAR_IS_LED_BLINKING
+    MOVLW 0x00
+    MOVWF IS_LED_BLINKING
+    RETURN
+    
+;Piège l'execution dans une boucle afin d'attendre que le bouton soit relaché
+BOUNCING_BUTTON_SECURITY
+    BTFSC PORTA,RA0	;si les bits de PORTA=0 on skip l'instruction suivante immédiate (le bouton n'est pas appuyé donc on allume pas les leds)
+    GOTO BOUNCING_BUTTON_SECURITY
+    RETURN
+    
+;Boucle de check du bouton entrecoupée de délais répétée 0x20 fois
 DELAY_WITH_CHECK_BUTTON
     MOVLW 0x20
     MOVWF NB_BUTTON_CHECK
@@ -126,7 +136,8 @@ DELAY_WITH_CHECK_BUTTON_CHECK
     CALL DELAY
     CALL CHECK_RA0
     GOTO DELAY_WITH_CHECK_BUTTON_0
-
+    
+;Delay subroutine
 DELAY
     MOVLW	0xE7
     MOVWF	d1
