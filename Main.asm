@@ -55,7 +55,7 @@ START
     MOVLW 0x00		    ;0x00 = hexa / b'0' = binaire / 0 = decimal on doit préciser le système de numération
     MOVWF TRISB		    ; on met 0x00 dans TRISB, ce qui met PORTB en output
 ;Partie qui dit que RA4 à RA0 sont des inputs
-    MOVLW b'00000111'	    ;0x01 = input
+    MOVLW b'00000011'	    ;1=input -> ici RA0 et RA1
     MOVWF TRISA		    ;on met 1 dans trisA : input
     
     BCF STATUS, RP0	    ;On repasse dans la bank0 pour pouvoir utiliser PORTA et B sans utiliser les trucs à la ligne 40
@@ -64,7 +64,8 @@ START
 
 ;Boucle principale du projet
 MAIN
-    CALL CHECK_RA0		;On appelle le check du bouton
+    CALL CHECK_RA0		;On appelle le check du bouton RA0
+    CALL SHUT_THE_FUCK_UP	;On appelle le check du bouton RA1
     BTFSC IS_LED_BLINKING, 0	;Skip l'instruction suivante si Is_Led_Blinking = 0 (donc si la led ne clignote pas) le programme fait juste boucler, attendant qu'on appuie sur un bouton
 				;Si is_led_blinking est à 1, on fait l'instruction du dessous
     CALL BLINK_ALL_LEDS_ONCE	;On fait clignoter les leds 1 fois
@@ -81,14 +82,23 @@ CHECK_RA0			;Subroutine qui permet d'allumer/éteindre la led
     BTFSC IS_LED_BLINKING,0	;Skip l'instruction suivante si Is_Led_Blinking = 0 (donc si la led ne clignote pas)
     GOTO STOP_LED_BLINKING	;Si is_led_blinking = 1, on attérit sur cette instruction, donc on va à la subroutine stop_led_blinking
 START_LED_BLINKING		
-    CALL BOUNCING_BUTTON_SECURITY   ;Pour faire clignoter la led, on appelle la sub qui gère le rebond du bouton
-    CALL SET_IS_LED_BLINKING	    ;Puis on appelle la sub qui met l'état de is_led_blinking à 1
-    GOTO MAIN			    ;On va au Main
+    CALL BOUNCING_BUTTON_SECURITY_RA0   ;Pour faire clignoter la led, on appelle la sub qui gère le rebond du bouton
+    CALL SET_IS_LED_BLINKING		;Puis on appelle la sub qui met l'état de is_led_blinking à 1
+    GOTO MAIN				;On va au Main
 STOP_LED_BLINKING
-    CALL BOUNCING_BUTTON_SECURITY   ;Pour stopper le clignotement, on appelle la sub qui gère le rebond du bouton
-    CALL CLEAR_IS_LED_BLINKING	    ;Puis on appelle la sub qui met l'état de is_led_blinking à 0
-    CALL LIGHT_ON_PORTB		    ;Puis on appelle la sub qui allume toutes les leds
-    GOTO MAIN			    ;On va au Main
+    CALL BOUNCING_BUTTON_SECURITY_RA0   ;Pour stopper le clignotement, on appelle la sub qui gère le rebond du bouton
+    CALL CLEAR_IS_LED_BLINKING		;Puis on appelle la sub qui met l'état de is_led_blinking à 0
+    CALL LIGHT_ON_PORTB			;Puis on appelle la sub qui allume toutes les leds
+    GOTO MAIN				;On va au Main
+
+;Comme CHECK_RA0 mais avec RA1 (mais pour éteindre les leds)
+SHUT_THE_FUCK_UP
+    BTFSS PORTA,RA1			;On teste les bits qu'on a dans f (donc PORTA), s'ils sont =1 on skip l'instruction suivante immédiate et on va à celle d'après
+    RETURN				;Return execute l'instruction après le call de la fonction Shut_the_fuck_up
+    CALL BOUNCING_BUTTON_SECURITY_RA1   ;Pour stopper le clignotement, on appelle la sub qui gère le rebond du bouton
+    CALL CLEAR_IS_LED_BLINKING		;Puis on appelle la sub qui met l'état de is_led_blinking à 0
+    CALL LIGHT_OFF_PORTB		;Puis on appelle la sub qui allume toutes les leds
+    GOTO MAIN				;On va au Main
 
 ;Allume puis éteint les leds, pendant le délais d'attente check le bouton
 BLINK_ALL_LEDS_ONCE
@@ -96,7 +106,7 @@ BLINK_ALL_LEDS_ONCE
     CALL DELAY_WITH_CHECK_BUTTON    ;On appelle la sub qui temporise en écoutant le bouton
     CALL LIGHT_OFF_PORTB	    ;On appelle la sub qui éteint toutes les leds
     CALL DELAY_WITH_CHECK_BUTTON    ;On appelle la sub qui temporise en écoutant le bouton
-    RETURN			    ; 
+    RETURN			    ;On retourne après le call de la subroutine 
     
 ;Allume toutes les leds
 LIGHT_ON_PORTB
@@ -122,11 +132,17 @@ CLEAR_IS_LED_BLINKING
     MOVWF IS_LED_BLINKING   ;On met ce qu'il y a dans le W (0x00) dans Is_Led_Blinking
     RETURN		    ;On retourne après le call de la subroutine
     
-;Piège l'execution dans une boucle afin d'attendre que le bouton soit relaché
-BOUNCING_BUTTON_SECURITY
-    BTFSC PORTA,RA0		    ;si les bits de PORTA=0 on skip l'instruction suivante immédiate 
-    GOTO BOUNCING_BUTTON_SECURITY   ;On revient au début de la subroutine si PORTA=1
-    RETURN			    ;On retourne après le call de la subroutine
+;Piège l'execution dans une boucle afin d'attendre que le bouton RA0 soit relaché
+BOUNCING_BUTTON_SECURITY_RA0
+    BTFSC PORTA,RA0			;si les bits de PORTA=0 on skip l'instruction suivante immédiate 
+    GOTO BOUNCING_BUTTON_SECURITY_RA0   ;On revient au début de la subroutine si PORTA=1
+    RETURN				;On retourne après le call de la subroutine
+    
+;Piège l'execution dans une boucle afin d'attendre que le bouton RA1 soit relaché    
+BOUNCING_BUTTON_SECURITY_RA1
+    BTFSC PORTA,RA1			;si les bits de PORTA=0 on skip l'instruction suivante immédiate 
+    GOTO BOUNCING_BUTTON_SECURITY_RA1   ;On revient au début de la subroutine si PORTA=1
+    RETURN				;On retourne après le call de la subroutine
     
 ;Boucle de check du bouton entrecoupée de délais répétée 0x20 fois
 ;La vraie utilité de cette sub est de check le bouton pendant qu'on attend l'exécution du delay
@@ -140,7 +156,8 @@ DELAY_WITH_CHECK_BUTTON_0
     RETURN				    ;Return là où on call la subroutine
 DELAY_WITH_CHECK_BUTTON_CHECK
     CALL DELAY				    ;On appelle l'autre delay, en gros on a un décompte dans le décompte
-    CALL CHECK_RA0			    ;On écoute le bouton
+    CALL CHECK_RA0			    ;On écoute le bouton RA0
+    CALL SHUT_THE_FUCK_UP		    ;On écoute le bouton RA1
     GOTO DELAY_WITH_CHECK_BUTTON_0	    ;boucle sur la ligne correspondante
     
 ;Delay subroutine
