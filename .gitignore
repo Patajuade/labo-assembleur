@@ -1,7 +1,7 @@
 # Ignoring files according to http://microchip.wikidot.com/faq:72
-/MYPROJECT.X/build/
-/MYPROJECT.X/dist/
+/build/
+/dist/
 #Ingoring private Makefiles, to create them open the MPLAB IDE or use the C:\Program Files (x86)\Microchip\MPLABX<VERSION>\mplab_ide\bin\prjMakefilesGenerator.bat script
-/MYPROJECT.X/nbproject/Makefile-*
-/MYPROJECT.X/nbproject/Package-*
-/MYPROJECT.X/nbproject/private/
+/nbproject/Makefile-*
+/nbproject/Package-*
+/nbproject/private/
