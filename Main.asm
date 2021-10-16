@@ -29,7 +29,7 @@
 ;************************************************************************
     cblock 0x020
 ; déclaration de variables
-IS_LED_BLINKING,d1,d2,NB_BUTTON_CHECK
+IS_LED_BLINKING,d1,d2,NB_BUTTON_CHECK,IS_SCANNER_EFFECT_ON
     endc   
  ;equ
 ;************************************************************************
@@ -55,7 +55,7 @@ START
     MOVLW 0x00		    ;0x00 = hexa / b'0' = binaire / 0 = decimal on doit préciser le système de numération
     MOVWF TRISB		    ; on met 0x00 dans TRISB, ce qui met PORTB en output
 ;Partie qui dit que RA4 à RA0 sont des inputs
-    MOVLW b'00000011'	    ;1=input -> ici RA0 et RA1
+    MOVLW b'00000111'	    ;1=input -> ici RA0 et RA1
     MOVWF TRISA		    ;on met 1 dans trisA : input
     
     BCF STATUS, RP0	    ;On repasse dans la bank0 pour pouvoir utiliser PORTA et B sans utiliser les trucs à la ligne 40
@@ -66,6 +66,7 @@ START
 MAIN
     CALL CHECK_RA0		;On appelle le check du bouton RA0
     CALL SHUT_THE_FUCK_UP	;On appelle le check du bouton RA1
+    CALL SCANNER_EFFECT		;Check RA2
     BTFSC IS_LED_BLINKING, 0	;Skip l'instruction suivante si Is_Led_Blinking = 0 (donc si la led ne clignote pas) le programme fait juste boucler, attendant qu'on appuie sur un bouton
 				;Si is_led_blinking est à 1, on fait l'instruction du dessous
     CALL BLINK_ALL_LEDS_ONCE	;On fait clignoter les leds 1 fois
@@ -107,6 +108,27 @@ BLINK_ALL_LEDS_ONCE
     CALL LIGHT_OFF_PORTB	    ;On appelle la sub qui éteint toutes les leds
     CALL DELAY_WITH_CHECK_BUTTON    ;On appelle la sub qui temporise en écoutant le bouton
     RETURN			    ;On retourne après le call de la subroutine 
+
+SCANNER_EFFECT
+    BTFSS PORTA, RA2
+    RETURN
+    CALL BOUNCING_BUTTON_SECURITY_RA2
+    CALL SET_IS_SCANNER_EFFECT_ON
+    CALL TRY_SCANNER_EFFECT_STATE1
+    CALL DELAY_WITH_CHECK_BUTTON
+    CALL TRY_SCANNER_EFFECT_STATE2
+    CALL DELAY_WITH_CHECK_BUTTON
+    CALL TRY_SCANNER_EFFECT_STATE3
+    CALL DELAY_WITH_CHECK_BUTTON
+    CALL TRY_SCANNER_EFFECT_STATE4
+    CALL DELAY_WITH_CHECK_BUTTON
+    CALL TRY_SCANNER_EFFECT_STATE3
+    CALL DELAY_WITH_CHECK_BUTTON
+    CALL TRY_SCANNER_EFFECT_STATE2
+    CALL DELAY_WITH_CHECK_BUTTON
+    CALL TRY_SCANNER_EFFECT_STATE1
+    CALL DELAY_WITH_CHECK_BUTTON
+    GOTO MAIN
     
 ;Allume toutes les leds
 LIGHT_ON_PORTB
@@ -131,6 +153,34 @@ CLEAR_IS_LED_BLINKING
     MOVLW 0x00		    ;On move le Littéral 0x00 dans le W
     MOVWF IS_LED_BLINKING   ;On met ce qu'il y a dans le W (0x00) dans Is_Led_Blinking
     RETURN		    ;On retourne après le call de la subroutine
+
+SET_IS_SCANNER_EFFECT_ON
+    MOVLW 0x01		    ;On move le Littéral 0x01 dans le W
+    MOVWF IS_SCANNER_EFFECT_ON   ;On met ce qu'il y a dans le W (0x01) dans Is_Led_Blinking
+    RETURN		    ;On retourne après le call de la subroutine
+    
+CLEAR_IS_SCANNER_EFFECT_ON
+    MOVLW 0x00		    ;On move le Littéral 0x01 dans le W
+    MOVWF IS_SCANNER_EFFECT_ON   ;On met ce qu'il y a dans le W (0x01) dans Is_Led_Blinking
+    RETURN		    ;On retourne après le call de la subroutine
+    
+;Essai effet Scanner
+TRY_SCANNER_EFFECT_STATE1
+    MOVLW b'10000001'
+    MOVWF PORTB
+    RETURN
+TRY_SCANNER_EFFECT_STATE2
+    MOVLW b'01000010'
+    MOVWF PORTB
+    RETURN
+TRY_SCANNER_EFFECT_STATE3
+    MOVLW b'00100100'
+    MOVWF PORTB
+    RETURN
+TRY_SCANNER_EFFECT_STATE4
+    MOVLW b'00011000'
+    MOVWF PORTB
+    RETURN
     
 ;Piège l'execution dans une boucle afin d'attendre que le bouton RA0 soit relaché
 BOUNCING_BUTTON_SECURITY_RA0
@@ -142,6 +192,11 @@ BOUNCING_BUTTON_SECURITY_RA0
 BOUNCING_BUTTON_SECURITY_RA1
     BTFSC PORTA,RA1			;si les bits de PORTA=0 on skip l'instruction suivante immédiate 
     GOTO BOUNCING_BUTTON_SECURITY_RA1   ;On revient au début de la subroutine si PORTA=1
+    RETURN				;On retourne après le call de la subroutine
+ 
+BOUNCING_BUTTON_SECURITY_RA2
+    BTFSC PORTA,RA2			;si les bits de PORTA=0 on skip l'instruction suivante immédiate 
+    GOTO BOUNCING_BUTTON_SECURITY_RA2   ;On revient au début de la subroutine si PORTA=1
     RETURN				;On retourne après le call de la subroutine
     
 ;Boucle de check du bouton entrecoupée de délais répétée 0x20 fois
@@ -158,6 +213,7 @@ DELAY_WITH_CHECK_BUTTON_CHECK
     CALL DELAY				    ;On appelle l'autre delay, en gros on a un décompte dans le décompte
     CALL CHECK_RA0			    ;On écoute le bouton RA0
     CALL SHUT_THE_FUCK_UP		    ;On écoute le bouton RA1
+    CALL SCANNER_EFFECT
     GOTO DELAY_WITH_CHECK_BUTTON_0	    ;boucle sur la ligne correspondante
     
 ;Delay subroutine
