@@ -220,39 +220,41 @@ K2000_EFFECT_LED_SHIFT_TO_LEFT		    ;
     GOTO K2000_EFFECT_LOOP_TO_LEFT	    ; va à la sub qui décrémente, et boucle
     
 PARROT_EFFECT	;A faire!
-    MOVLW 2					;On met 2 comme ça il compte le premier appui bouton dans le compteur pour allumer
-    MOVWF PARROT_COUNTER
-    CALL PARROT_EFFECT_REFILL_LOOP_HOLDER
+    MOVLW 2					; On met 2 comme ça il compte le premier appui bouton dans le compteur pour allumer
+    MOVWF PARROT_COUNTER			; On met 2 dans parrot_counter
+    CALL PARROT_EFFECT_REFILL_LOOP_HOLDER	; On met du temps à notre "timer"
     
 PARROT_EFFECT_WAIT_INSTRUCTION
-    CALL DELAY
-    CALL DELAY
+    CALL DELAY					; On attend avant d'exécuter l'instruction pour "ralentir le programme"
+    CALL DELAY					; Idem
+    BTFSS PORTA, RA2				; Si le bouton est appuyé, on skip l'instruction d'après  
+    GOTO PARROT_EFFECT_LOOP_HOLDER		; On retient l'effet tant que le bouton n'est pas appuyé (un certain nombre de fois après, si on a pas appuyé il se barre et on revient au main)
+    CALL PARROT_EFFECT_REFILL_LOOP_HOLDER	; On recharge le timer (à chaque appui du bouton donc)
+    BTFSC PORTA,RA2				; Si le bouton n'est pas appuyé, on skip l'instruction d'après et on sort de la boucle (protection contre le rebond)
+    GOTO $-1					; On retourne à la ligne d'avant et on boucle dessus tant que le bouton est appuyé (rebond)
+    INCF PARROT_COUNTER, f			; variable qui s'incrémente à chaque appui (pour compter le nombre d'appuis)
+    GOTO PARROT_EFFECT_WAIT_INSTRUCTION		; si on continue d'appuyer, on repasse dans la boucle (et la variable parrot_counter s'incrémente encore)
     
-    BTFSS PORTA, RA2					; Si le bouton est appuyé, on skip l'instruction d'après  
-    GOTO PARROT_EFFECT_LOOP_HOLDER
-    CALL PARROT_EFFECT_REFILL_LOOP_HOLDER
-    BTFSC PORTA,RA2					; Si le bouton n'est pas appuyé, on skip l'instruction d'après
-    GOTO $-1						; On retourne à la ligne d'avant et on boucle dessus tant que le bouton est appuyé
-    INCF PARROT_COUNTER, f				; Une variable s'incrémente à chaque appui
-    GOTO PARROT_EFFECT_WAIT_INSTRUCTION			;si on continue d'appuyer
 PARROT_EFFECT_LOOP 
-    DECFSZ PARROT_COUNTER, f 
-    GOTO PARROT_EFFECT_LOOP_ACTION
-    CALL SHUT_THE_LEDS_OFF
+    DECFSZ PARROT_COUNTER, f			; Tant qu'on peut décrémenter PARROT_COUNTER, on exécute ce qu'il y a en dessous, dès qu'on arrive à 0 on skip 
+    GOTO PARROT_EFFECT_LOOP_ACTION		; On fait clignotter les leds
+    CALL SHUT_THE_LEDS_OFF			; On éteint les leds et on wipe le pattern selector pour retourner à un état initiale du programme
     RETURN
+    
 PARROT_EFFECT_LOOP_ACTION
-    CALL BLINK_ALL_LEDS_ONCE
-    GOTO PARROT_EFFECT_LOOP
+    CALL BLINK_ALL_LEDS_ONCE			; On fait clignotter les leds
+    GOTO PARROT_EFFECT_LOOP			; On retourne dans PARROT_EFFECT_LOOP (tant que la valeur de parrot_counter décrémente)
     
 PARROT_EFFECT_LOOP_HOLDER
-    DECFSZ HOLD_LISTENING_PARROT_EFFECT,f
-    GOTO PARROT_EFFECT_WAIT_INSTRUCTION
-    CALL PARROT_EFFECT_LOOP
-    GOTO MAIN
+    DECFSZ HOLD_LISTENING_PARROT_EFFECT,f	; On décrémente la variable qui empêche l'effet de se terminer (countdown), on exécute l'instruction dessous tant qu'elle n'atteint pas 0, quand elle atteint 0 on skip
+    GOTO PARROT_EFFECT_WAIT_INSTRUCTION		; On va boucler sur la boucle qui incrémente PARROT_COUNTER
+    CALL PARROT_EFFECT_LOOP			; On appelle la sub qui allume les leds le nb de fois qu'on vient d'appuyer, puis qui termine l'effet
+    GOTO MAIN					; On retourne au main
+    
 PARROT_EFFECT_REFILL_LOOP_HOLDER
-    MOVLW 25
-    MOVWF HOLD_LISTENING_PARROT_EFFECT
-    RETURN
+    MOVLW 25					; 25 dans work
+    MOVWF HOLD_LISTENING_PARROT_EFFECT		; work dans la variable qui va empêcher l'effet de se terminer tant qu'on appuie sur le bouton
+    RETURN					; On retourne à l'appel de la sub
     
 ;************************************************************************ 
 ; PORTB STATE REGISTER MODIFICATIONS
