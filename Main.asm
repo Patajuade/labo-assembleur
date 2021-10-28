@@ -25,7 +25,7 @@
 					; une commande pour le compilateur
 ;************************************************************************
     cblock 0x020	    ; Debut de l'endroit où on déclare les variables
-    d1,d2,NB_BUTTON_CHECK,LEDS_PATTERN_SELECTOR,K2000_COUNTDOWN
+    d1,d2,NB_BUTTON_CHECK,LEDS_PATTERN_SELECTOR,K2000_COUNTDOWN,PARROT_COUNTER,HOLD_LISTENING_PARROT_EFFECT
     endc		    ; Fin de l'endroit où on déclare les variables
     
 ;************************************************************************
@@ -55,6 +55,11 @@ START
 ; START - BANK SELECTION TO USE PORTA / PORTB
 ;************************************************************************    
     BCF STATUS, RP0		; On repasse dans la bank0 pour pouvoir utiliser PORTA et B sans utiliser les trucs à la ligne 40
+;************************************************************************ 
+; START - VAR INIT AREA
+;************************************************************************ 
+    MOVLW 0x00
+    MOVWF LEDS_PATTERN_SELECTOR
 ;************************************************************************ 
 ; MAIN AREA - MAIN LOOP OF THE PROGRAM
 ;************************************************************************ 
@@ -123,17 +128,18 @@ ACTION_RA2				; L'action liée au bouton RA2
 ; ACTIONS TRIGGERS WITH PATTERN SELECTOR
 ;************************************************************************ 
 SCANNER_EFFECT_START_ACTION		; Sub qui permet de démarrer une action en fonction du bouton appuyé
-    BTFSC LEDS_PATTERN_SELECTOR, 0	; ",0" veut dire qu'on check le bit en position 0 (ici X => 0000 000X ). BTFSC prend en compte ce bit, si c'est un 0 il skip, sinon il exécute l'instruction suivante.
-    CALL SCANNER_EFFECT			; Si le bouton en position 0 a son bit à 1 (donc si il est appuyé) on call la sub
+    BTFSC LEDS_PATTERN_SELECTOR, 0	; ",0" veut dire qu'on check le bit en position 1 (ici X => 0000 000X ). BTFSC prend en compte ce bit, si c'est un 0 il skip, sinon il exécute l'instruction suivante.
+    CALL SCANNER_EFFECT			;
     RETURN				; On retourne là où la sub est call
     
 K2000_START_ACTION
-    BTFSC LEDS_PATTERN_SELECTOR, 1	; On check le bit en position 1 (0000 00X0), BTFSC le lit, si c'est 0 il skip, si c'est 1 il exécute
-    CALL K2000_EFFECT			; Si le bouton en position 1 a son bit à 1 (donc si il est appuyé) on call la sub
+    BTFSC LEDS_PATTERN_SELECTOR, 1	; On check le bit en position 2 (0000 00X0), BTFSC le lit, si c'est 0 il skip, si c'est 1 il exécute
+    CALL K2000_EFFECT			;
     RETURN				; On retourne là où la sub est call
     
-PARROT_EFFECT_START_ACTION		; On check le bit en position 2 (0000 0X00), BTFSC le lit, si c'est 0 il skip, si c'est 1 il exécute
-    BTFSC LEDS_PATTERN_SELECTOR, 2	; Si le bouton en position 2 a son bit à 1 (donc si il est appuyé) on call la sub
+PARROT_EFFECT_START_ACTION		
+    BTFSC LEDS_PATTERN_SELECTOR, 2	; On check le bit en position 3 (0000 0X00), BTFSC le lit, si c'est 0 il skip, si c'est 1 il exécute
+    CALL PARROT_EFFECT			;
     RETURN				; On retourne là où la sub est call
 ;************************************************************************ 
 ; PATTERN SELECTION
@@ -196,12 +202,12 @@ K2000_EFFECT
     MOVWF K2000_COUNTDOWN		    ; On met 8 dans la variable countdown
 K2000_EFFECT_LOOP_TO_RIGHT		    
     DECFSZ K2000_COUNTDOWN,f		    ; Decrémente K2000_COUNTDOWN, fait l'instruction suivante tant qu'il n'arrive pas à 0
-    CALL K2000_EFFECT_LED_SHIFT_TO_RIGHT    ; fait bouger les leds vers la droite
+    GOTO K2000_EFFECT_LED_SHIFT_TO_RIGHT    ; fait bouger les leds vers la droite
     MOVLW 8				    ; Met 8 dans W
     MOVWF K2000_COUNTDOWN		    ; met 8 dans K2000_COUNTDOWN
 K2000_EFFECT_LOOP_TO_LEFT		    
     DECFSZ K2000_COUNTDOWN,f		    ; Decrémente K2000_COUNTDOWN, fait l'instruction suivante tant qu'il n'arrive pas à 0
-    CALL K2000_EFFECT_LED_SHIFT_TO_LEFT	    ; fait bouger les leds vers la gauche
+    GOTO K2000_EFFECT_LED_SHIFT_TO_LEFT	    ; fait bouger les leds vers la gauche
     RETURN				    ; On retourne là où la sub est call
     
 K2000_EFFECT_LED_SHIFT_TO_RIGHT		    ;
@@ -214,6 +220,38 @@ K2000_EFFECT_LED_SHIFT_TO_LEFT		    ;
     GOTO K2000_EFFECT_LOOP_TO_LEFT	    ; va à la sub qui décrémente, et boucle
     
 PARROT_EFFECT	;A faire!
+    MOVLW 2					;On met 2 comme ça il compte le premier appui bouton dans le compteur pour allumer
+    MOVWF PARROT_COUNTER
+    CALL PARROT_EFFECT_REFILL_LOOP_HOLDER
+    
+PARROT_EFFECT_WAIT_INSTRUCTION
+    CALL DELAY
+    CALL DELAY
+    
+    BTFSS PORTA, RA2					; Si le bouton est appuyé, on skip l'instruction d'après  
+    GOTO PARROT_EFFECT_LOOP_HOLDER
+    CALL PARROT_EFFECT_REFILL_LOOP_HOLDER
+    BTFSC PORTA,RA2					; Si le bouton n'est pas appuyé, on skip l'instruction d'après
+    GOTO $-1						; On retourne à la ligne d'avant et on boucle dessus tant que le bouton est appuyé
+    INCF PARROT_COUNTER, f				; Une variable s'incrémente à chaque appui
+    GOTO PARROT_EFFECT_WAIT_INSTRUCTION			;si on continue d'appuyer
+PARROT_EFFECT_LOOP 
+    DECFSZ PARROT_COUNTER, f 
+    GOTO PARROT_EFFECT_LOOP_ACTION
+    CALL SHUT_THE_LEDS_OFF
+    RETURN
+PARROT_EFFECT_LOOP_ACTION
+    CALL BLINK_ALL_LEDS_ONCE
+    GOTO PARROT_EFFECT_LOOP
+    
+PARROT_EFFECT_LOOP_HOLDER
+    DECFSZ HOLD_LISTENING_PARROT_EFFECT,f
+    GOTO PARROT_EFFECT_WAIT_INSTRUCTION
+    CALL PARROT_EFFECT_LOOP
+    GOTO MAIN
+PARROT_EFFECT_REFILL_LOOP_HOLDER
+    MOVLW 25
+    MOVWF HOLD_LISTENING_PARROT_EFFECT
     RETURN
     
 ;************************************************************************ 
@@ -221,7 +259,7 @@ PARROT_EFFECT	;A faire!
 ;************************************************************************  
 SCANNER_EFFECT_MOVE_AND_WAIT
     MOVWF PORTB				 ; On move ce qu'il y a dans le W dans F donc PORTB
-    CALL DELAY_WITH_CHECK_BUTTON	 ; On appelle la sub qui???
+    CALL DELAY_WITH_CHECK_BUTTON	 ; On appelle la sub
     RETURN				 ; On retourne là où la sub est call
     
 LIGHT_ON_PORTB
@@ -246,9 +284,9 @@ DELAY_WITH_CHECK_BUTTON_0		    ; loop
     RETURN				    ; On retourne là où la sub est call
 DELAY_WITH_CHECK_BUTTON_CHECK
     CALL DELAY				    ; attend
-    CALL CHECK_BUTTONS			    ; Ecoute le bouton
+    CALL CHECK_BUTTONS			    ; Ecoute les boutons
     GOTO DELAY_WITH_CHECK_BUTTON_0	    ; retourne au label
-    
+  
 DELAY
     MOVLW	0xE7
     MOVWF	d1
